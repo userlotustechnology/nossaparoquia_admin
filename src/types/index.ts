@@ -49,6 +49,53 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface ObservabilityOverview {
+  application: {
+    env: string;
+    debug: boolean;
+    php: string;
+    laravel: string;
+  };
+  observability: {
+    log_all_api_requests: boolean;
+    slow_request_log_ms: number;
+    request_correlation_header: string;
+  };
+  health: {
+    database_reachable: boolean;
+  };
+  queue: {
+    driver: string;
+    failed_jobs: number | null;
+    pending_jobs: number | null;
+  };
+  cache: {
+    store: string;
+  };
+  pulse: {
+    enabled: boolean;
+    dashboard_path: string;
+    dashboard_url: string | null;
+    tables_present: boolean;
+    ingest_worker: string;
+    spa_note: string;
+  };
+  pulse_samples_24h: {
+    slow_requests: Array<{
+      method: string | null;
+      path: string | null;
+      via: string | null;
+      duration_ms: number;
+      at: string;
+    }>;
+    slow_queries: Array<{
+      summary: string;
+      duration_ms: number;
+      at: string;
+    }>;
+  };
+}
+
 export interface Parish {
   id: number;
   uuid: string;

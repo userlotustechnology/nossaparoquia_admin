@@ -38,6 +38,7 @@ import {
   KeyRound,
   Clock3,
   MessageSquare,
+  HeartPulse,
 } from 'lucide-react';
 
 const navigation = [
@@ -79,6 +80,7 @@ const navigation = [
   { name: 'Restrições de IP', href: '/ip-restricoes', icon: Lock, section: 'Sistema' },
   { name: 'Webhooks', href: '/webhooks', icon: Webhook, section: 'Sistema' },
   { name: 'Slack (canais)', href: '/integracoes/slack', icon: MessageSquare, section: 'Sistema' },
+  { name: 'Observabilidade API', href: '/observabilidade', icon: HeartPulse, section: 'Sistema' },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {

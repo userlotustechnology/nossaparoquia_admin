@@ -44,6 +44,7 @@ import PermissionCatalog from '@/pages/PermissionCatalog';
 import SlackWebhookConfigs from '@/pages/SlackWebhookConfigs';
 import SpiritualDirections from '@/pages/SpiritualDirections';
 import NovenaReport from '@/pages/NovenaReport';
+import Observability from '@/pages/Observability';
 
 export default function App() {
   return (
@@ -99,6 +100,7 @@ export default function App() {
                       <Route path="/integracoes/slack" element={<SlackWebhookConfigs />} />
                       <Route path="/ip-restricoes" element={<IpRestrictions />} />
                       <Route path="/webhooks" element={<Webhooks />} />
+                      <Route path="/observabilidade" element={<Observability />} />
                       {/* Fallback */}
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
