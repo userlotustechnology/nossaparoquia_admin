@@ -47,3 +47,40 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
 }
+
+export interface Parish {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  email: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  pix_key: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  is_active: boolean;
+  requires_link_approval: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Plan {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  color: string | null;
+  price_monthly: number;
+  price_yearly: number;
+  max_parishioners: number | null;
+  max_families: number | null;
+  max_events: number | null;
+  max_campaigns: number | null;
+  is_active: boolean;
+  is_public: boolean;
+  features: Record<string, boolean>;
+  created_at: string;
+  updated_at: string;
+}
