@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
+import DataTable from '@/components/DataTable';
 
 interface Row {
   id: string;
@@ -58,6 +59,52 @@ export default function SpiritualDirections() {
     setPage(1);
   }, [parishId, status]);
 
+  const columns = [
+    {
+      key: 'directee',
+      label: 'Dirigido',
+      render: (row: Row) =>
+        row.directee ? (
+          <div>
+            <span className="font-medium text-gray-900">{row.directee.name}</span>
+            <p className="text-xs text-gray-500">{row.directee.email}</p>
+          </div>
+        ) : (
+          '—'
+        ),
+    },
+    {
+      key: 'director',
+      label: 'Diretor',
+      render: (row: Row) =>
+        row.director ? (
+          <div>
+            <span className="font-medium text-gray-900">{row.director.name}</span>
+            <p className="text-xs text-gray-500">{row.director.email}</p>
+          </div>
+        ) : (
+          '—'
+        ),
+    },
+    {
+      key: 'parish',
+      label: 'Paróquia',
+      render: (row: Row) => row.parish?.name ?? '—',
+    },
+    {
+      key: 'status_label',
+      label: 'Status',
+      render: (row: Row) => <span className="text-gray-900">{row.status_label}</span>,
+    },
+    {
+      key: 'created_at',
+      label: 'Criado',
+      render: (row: Row) => (
+        <span className="text-gray-600">{new Date(row.created_at).toLocaleDateString('pt-BR')}</span>
+      ),
+    },
+  ];
+
   return (
     <div>
       <div className="mb-6">
@@ -65,69 +112,55 @@ export default function SpiritualDirections() {
         <p className="text-gray-500">Relacionamentos diretor ↔ dirigido (visão global)</p>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <select value={parishId} onChange={(e) => setParishId(e.target.value)} className="rounded border px-3 py-2 text-sm">
-          <option value="">Todas as paróquias</option>
-          {parishes.map((p) => (
-            <option key={p.id} value={String(p.id)}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded border px-3 py-2 text-sm">
-          <option value="">Todos os status</option>
-          {Object.entries(statuses).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 text-left">Dirigido</th>
-              <th className="px-4 py-2 text-left">Diretor</th>
-              <th className="px-4 py-2 text-left">Paróquia</th>
-              <th className="px-4 py-2 text-left">Status</th>
-              <th className="px-4 py-2 text-left">Criado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-400">
-                  Carregando…
-                </td>
-              </tr>
-            ) : (
-              data.map((row) => (
-                <tr key={row.id} className="border-b border-gray-100">
-                  <td className="px-4 py-2">{row.directee ? `${row.directee.name}` : '—'}</td>
-                  <td className="px-4 py-2">{row.director ? `${row.director.name}` : '—'}</td>
-                  <td className="px-4 py-2">{row.parish?.name ?? '—'}</td>
-                  <td className="px-4 py-2">{row.status_label}</td>
-                  <td className="px-4 py-2 text-gray-600">{new Date(row.created_at).toLocaleDateString('pt-BR')}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {meta && meta.last_page > 1 && (
-        <div className="mt-4 flex justify-center gap-2 text-sm">
-          <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="rounded border px-3 py-1 disabled:opacity-40">
-            Anterior
-          </button>
-          <span>{page} / {meta.last_page}</span>
-          <button type="button" disabled={page >= meta.last_page} onClick={() => setPage((p) => p + 1)} className="rounded border px-3 py-1 disabled:opacity-40">
-            Próximo
-          </button>
+      <div className="mb-4 flex flex-wrap gap-4 rounded-xl border border-gray-200 bg-white p-4">
+        <div>
+          <label htmlFor="sd-parish" className="mb-1 block text-xs font-medium text-gray-500">
+            Paróquia
+          </label>
+          <select
+            id="sd-parish"
+            value={parishId}
+            onChange={(e) => setParishId(e.target.value)}
+            className="min-w-[220px] rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">Todas as paróquias</option>
+            {parishes.map((p) => (
+              <option key={p.id} value={String(p.id)}>
+                {p.name}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+        <div>
+          <label htmlFor="sd-status" className="mb-1 block text-xs font-medium text-gray-500">
+            Status
+          </label>
+          <select
+            id="sd-status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="min-w-[200px] rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">Todos os status</option>
+            {Object.entries(statuses).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <DataTable
+        title="Relacionamentos"
+        columns={columns}
+        data={data}
+        loading={loading}
+        meta={meta}
+        onPageChange={setPage}
+        canCreate={false}
+        keyExtractor={(row) => row.id}
+      />
     </div>
   );
 }
