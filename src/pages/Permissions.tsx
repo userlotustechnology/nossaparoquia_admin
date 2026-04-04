@@ -24,9 +24,14 @@ export default function Permissions() {
   useEffect(() => {
     api.get('/admin/permissions')
       .then((res) => {
-        const d: PermissionsData = res.data.data;
-        setData(d);
-        setRolePermissions({ ...d.role_permissions });
+        const d = res.data.data;
+        const safe: PermissionsData = {
+          roles: Array.isArray(d?.roles) ? d.roles : [],
+          permissions: Array.isArray(d?.permissions) ? d.permissions : [],
+          role_permissions: d?.role_permissions && typeof d.role_permissions === 'object' ? d.role_permissions : {},
+        };
+        setData(safe);
+        setRolePermissions({ ...safe.role_permissions });
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
