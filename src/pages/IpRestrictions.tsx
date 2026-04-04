@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import Modal from '@/components/Modal';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Pencil } from 'lucide-react';
 
 interface IpRule {
   id: number;
   ip_address: string;
   type: 'whitelist' | 'blacklist';
-  reason: string;
+  description: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -16,6 +17,7 @@ export default function IpRestrictions() {
   const [rules, setRules] = useState<IpRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<IpRule | null>(null);
   const [saving, setSaving] = useState(false);
@@ -24,6 +26,7 @@ export default function IpRestrictions() {
     ip_address: '',
     type: 'blacklist' as 'whitelist' | 'blacklist',
     reason: '',
+    is_active: true,
   });
 
   const fetchData = () => {
@@ -43,13 +46,24 @@ export default function IpRestrictions() {
   }, []);
 
   const openCreate = () => {
-    setForm({ ip_address: '', type: 'blacklist', reason: '' });
+    setForm({ ip_address: '', type: 'blacklist', reason: '', is_active: true });
     setFormOpen(true);
+  };
+
+  const openEdit = (rule: IpRule) => {
+    setSelected(rule);
+    setForm({
+      ip_address: rule.ip_address,
+      type: rule.type,
+      reason: rule.description || '',
+      is_active: rule.is_active,
+    });
+    setEditOpen(true);
   };
 
   const handleSave = () => {
     setSaving(true);
-    api.post('/admin/ip-rules', form)
+    api.post('/admin/ip-rules', { ...form, description: form.reason, reason: form.reason })
       .then(() => {
         setFormOpen(false);
         fetchData();
@@ -62,6 +76,29 @@ export default function IpRestrictions() {
           ? Object.values(errors).flat().join('\n')
           : (axiosErr?.response?.data?.message || 'Erro ao salvar regra.');
         alert(msg);
+      })
+      .finally(() => setSaving(false));
+  };
+
+  const handleUpdate = () => {
+    if (!selected) return;
+    setSaving(true);
+    api
+      .put(`/admin/ip-rules/${selected.id}`, {
+        ip_address: form.ip_address,
+        type: form.type,
+        description: form.reason,
+        reason: form.reason,
+        is_active: form.is_active,
+      })
+      .then(() => {
+        setEditOpen(false);
+        setSelected(null);
+        fetchData();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert('Erro ao atualizar regra.');
       })
       .finally(() => setSaving(false));
   };
@@ -144,12 +181,21 @@ export default function IpRestrictions() {
                   <tr key={rule.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 font-medium text-gray-900">{rule.ip_address}</td>
                     <td className="py-3 px-4">{typeBadge(rule.type)}</td>
-                    <td className="py-3 px-4 text-gray-600">{rule.reason || '—'}</td>
+                    <td className="py-3 px-4 text-gray-600">{rule.description || '—'}</td>
                     <td className="py-3 px-4 text-gray-600">
                       {new Date(rule.created_at).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-right space-x-1">
                       <button
+                        type="button"
+                        onClick={() => openEdit(rule)}
+                        className="p-1.5 text-gray-400 hover:text-primary-600 rounded"
+                        title="Editar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => { setSelected(rule); setDeleteOpen(true); }}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded"
                         title="Excluir"
@@ -198,6 +244,15 @@ export default function IpRestrictions() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
             />
           </div>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">Regra ativa</span>
+          </label>
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
           <button
@@ -212,6 +267,65 @@ export default function IpRestrictions() {
             className="px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 rounded-lg"
           >
             {saving ? 'Salvando...' : 'Salvar'}
+          </button>
+        </div>
+      </Modal>
+
+      <Modal open={editOpen} onClose={() => { setEditOpen(false); setSelected(null); }} title="Editar regra de IP" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Endereço IP *</label>
+            <input
+              value={form.ip_address}
+              onChange={(e) => setForm({ ...form, ip_address: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+            <select
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value as 'whitelist' | 'blacklist' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="blacklist">Blacklist</option>
+              <option value="whitelist">Whitelist</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Motivo</label>
+            <textarea
+              value={form.reason}
+              onChange={(e) => setForm({ ...form, reason: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">Regra ativa</span>
+          </label>
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={() => { setEditOpen(false); setSelected(null); }}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleUpdate}
+            disabled={saving || !form.ip_address}
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg disabled:opacity-50"
+          >
+            {saving ? 'Salvando...' : 'Atualizar'}
           </button>
         </div>
       </Modal>

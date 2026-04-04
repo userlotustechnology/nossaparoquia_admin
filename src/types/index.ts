@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string | null;
@@ -28,6 +28,7 @@ export interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isImpersonating: boolean;
 }
 
 export interface PaginatedResponse<T> {

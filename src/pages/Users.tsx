@@ -4,7 +4,9 @@ import DataTable from '@/components/DataTable';
 import Modal from '@/components/Modal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import type { User, PaginatedResponse } from '@/types';
-import { RotateCcw, Trash2 } from 'lucide-react';
+import { RotateCcw, Trash2, Download, Monitor, UserCircle } from 'lucide-react';
+
+const IMPERSONATION_BACKUP_KEY = 'admin_impersonation_backup_token';
 
 type StatusFilter = 'active' | 'trashed' | 'all';
 
@@ -20,6 +22,11 @@ export default function Users() {
   const [forceDeleteOpen, setForceDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [sessionsUser, setSessionsUser] = useState<User | null>(null);
+  const [sessions, setSessions] = useState<
+    { id: string; ip_address: string | null; browser: string; os: string; last_activity: string }[]
+  >([]);
 
   const [form, setForm] = useState({
     name: '',
@@ -133,6 +140,68 @@ export default function Users() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const res = await api.get('/admin/export/users', { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `usuarios_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert('Erro ao exportar.');
+    }
+  };
+
+  const openSessions = async (u: User) => {
+    setSessionsUser(u);
+    setSessionsOpen(true);
+    try {
+      const res = await api.get(`/admin/users/${u.id}/sessions`);
+      setSessions(res.data.data);
+    } catch {
+      setSessions([]);
+    }
+  };
+
+  const revokeSession = async (sessionId: string) => {
+    if (!confirm('Revogar esta sessão?')) return;
+    try {
+      await api.delete(`/admin/sessions/${sessionId}`);
+      if (sessionsUser) openSessions(sessionsUser);
+    } catch {
+      alert('Erro ao revogar sessão.');
+    }
+  };
+
+  const revokeAllSessions = async () => {
+    if (!sessionsUser || !confirm('Revogar todas as sessões deste usuário?')) return;
+    try {
+      await api.delete(`/admin/users/${sessionsUser.id}/sessions`);
+      openSessions(sessionsUser);
+    } catch {
+      alert('Erro.');
+    }
+  };
+
+  const handleImpersonate = async (u: User) => {
+    if (u.role === 'admin') return;
+    if (!confirm(`Acessar o sistema como ${u.name}? Você poderá voltar ao painel de administrador depois.`)) return;
+    try {
+      const res = await api.post(`/admin/users/${u.id}/impersonate`, {});
+      const { token, user } = res.data.data;
+      const backup = localStorage.getItem('admin_auth_token');
+      if (backup) localStorage.setItem(IMPERSONATION_BACKUP_KEY, backup);
+      localStorage.setItem('admin_auth_token', token);
+      localStorage.setItem('admin_auth_user', JSON.stringify(user));
+      window.location.assign('/');
+    } catch {
+      alert('Não foi possível acessar como este usuário.');
+    }
+  };
+
   const handleForceDelete = async () => {
     if (!selected) return;
     setSaving(true);
@@ -195,9 +264,21 @@ export default function Users() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Usuários</h1>
-        <p className="text-gray-500">Gerencie os usuários do sistema</p>
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Usuários</h1>
+          <p className="text-gray-500">Gerencie os usuários do sistema</p>
+        </div>
+        {!isTrashed && (
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Download className="h-4 w-4" />
+            Exportar CSV
+          </button>
+        )}
       </div>
 
       {/* Status filter tabs */}
@@ -238,25 +319,78 @@ export default function Users() {
         createLabel="Novo Usuário"
         searchPlaceholder="Buscar por nome, e-mail..."
         keyExtractor={(u) => u.id}
-        extraActions={isTrashed ? (item) => (
-          <>
-            <button
-              onClick={() => handleRestore(item)}
-              className="p-1.5 text-gray-400 hover:text-green-600 rounded"
-              title="Restaurar"
-            >
-              <RotateCcw className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => { setSelected(item); setForceDeleteOpen(true); }}
-              className="p-1.5 text-gray-400 hover:text-red-600 rounded"
-              title="Excluir permanentemente"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </>
-        ) : undefined}
+        extraActions={(item) =>
+          isTrashed ? (
+            <>
+              <button
+                onClick={() => handleRestore(item)}
+                className="p-1.5 text-gray-400 hover:text-green-600 rounded"
+                title="Restaurar"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => { setSelected(item); setForceDeleteOpen(true); }}
+                className="p-1.5 text-gray-400 hover:text-red-600 rounded"
+                title="Excluir permanentemente"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              {item.role !== 'admin' && (
+                <button
+                  onClick={() => handleImpersonate(item)}
+                  className="p-1.5 text-gray-400 hover:text-amber-600 rounded"
+                  title="Acessar como usuário"
+                  type="button"
+                >
+                  <UserCircle className="h-4 w-4" />
+                </button>
+              )}
+              <button
+                onClick={() => openSessions(item)}
+                className="p-1.5 text-gray-400 hover:text-blue-600 rounded"
+                title="Sessões"
+                type="button"
+              >
+                <Monitor className="h-4 w-4" />
+              </button>
+            </>
+          )
+        }
       />
+
+      <Modal
+        open={sessionsOpen}
+        onClose={() => { setSessionsOpen(false); setSessionsUser(null); }}
+        title={sessionsUser ? `Sessões: ${sessionsUser.name}` : 'Sessões'}
+        size="lg"
+      >
+        <div className="mb-3 flex justify-end">
+          <button type="button" onClick={revokeAllSessions} className="text-sm text-red-600 hover:underline">
+            Encerrar todas
+          </button>
+        </div>
+        <div className="max-h-80 overflow-y-auto space-y-2 text-sm">
+          {sessions.length === 0 ? (
+            <p className="text-gray-500">Nenhuma sessão ativa (driver de sessão pode estar vazio em ambiente dev).</p>
+          ) : (
+            sessions.map((s) => (
+              <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-100 p-3">
+                <div>
+                  <div className="font-medium text-gray-900">{s.browser} · {s.os}</div>
+                  <div className="text-xs text-gray-500">{s.ip_address ?? 'IP —'} · {new Date(s.last_activity).toLocaleString('pt-BR')}</div>
+                </div>
+                <button type="button" onClick={() => revokeSession(s.id)} className="text-xs text-red-600">
+                  Revogar
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </Modal>
 
       {/* Form Modal */}
       <Modal

@@ -35,6 +35,14 @@ import GamificationActions from '@/pages/GamificationActions';
 import GamificationLevels from '@/pages/GamificationLevels';
 import GamificationPrizes from '@/pages/GamificationPrizes';
 import GamificationReport from '@/pages/GamificationReport';
+import GamificationUserLog from '@/pages/GamificationUserLog';
+import GamificationUserPrizes from '@/pages/GamificationUserPrizes';
+import LoginAudit from '@/pages/LoginAudit';
+import ParishLinkRequests from '@/pages/ParishLinkRequests';
+import PermissionCatalog from '@/pages/PermissionCatalog';
+import SlackWebhookConfigs from '@/pages/SlackWebhookConfigs';
+import SpiritualDirections from '@/pages/SpiritualDirections';
+import NovenaReport from '@/pages/NovenaReport';
 
 export default function App() {
   return (
@@ -55,6 +63,8 @@ export default function App() {
                       {/* Usuários */}
                       <Route path="/usuarios" element={<Users />} />
                       <Route path="/logs" element={<ActivityLogs />} />
+                      <Route path="/auditoria-login" element={<LoginAudit />} />
+                      <Route path="/vinculos-paroquia" element={<ParishLinkRequests />} />
                       {/* Paróquias */}
                       <Route path="/paroquias" element={<Parishes />} />
                       <Route path="/paroquias/:id" element={<ParishEdit />} />
@@ -63,13 +73,17 @@ export default function App() {
                       <Route path="/oracoes/categorias" element={<PrayerCategories />} />
                       <Route path="/oracoes" element={<Prayers />} />
                       <Route path="/meditacoes" element={<BibleMeditations />} />
+                      <Route path="/novenas/relatorio" element={<NovenaReport />} />
                       <Route path="/novenas" element={<Novenas />} />
+                      <Route path="/direcao-espiritual" element={<SpiritualDirections />} />
                       <Route path="/cursos" element={<FormationCourses />} />
                       <Route path="/certificados" element={<Certificates />} />
                       <Route path="/gamificacao/acoes" element={<GamificationActions />} />
                       <Route path="/gamificacao/niveis" element={<GamificationLevels />} />
                       <Route path="/gamificacao/premios" element={<GamificationPrizes />} />
+                      <Route path="/gamificacao/relatorio/usuario/:uuid" element={<GamificationUserLog />} />
                       <Route path="/gamificacao/relatorio" element={<GamificationReport />} />
+                      <Route path="/gamificacao/premios-pendentes" element={<GamificationUserPrizes />} />
                       {/* CMS */}
                       <Route path="/paginas" element={<CmsPages />} />
                       <Route path="/posts" element={<CmsPosts />} />
@@ -78,7 +92,9 @@ export default function App() {
                       <Route path="/banners" element={<CmsBanners />} />
                       {/* Sistema */}
                       <Route path="/configuracoes" element={<SystemSettings />} />
+                      <Route path="/permissoes/catalogo" element={<PermissionCatalog />} />
                       <Route path="/permissoes" element={<Permissions />} />
+                      <Route path="/integracoes/slack" element={<SlackWebhookConfigs />} />
                       <Route path="/ip-restricoes" element={<IpRestrictions />} />
                       <Route path="/webhooks" element={<Webhooks />} />
                       {/* Fallback */}

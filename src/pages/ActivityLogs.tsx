@@ -13,7 +13,24 @@ export default function ActivityLogs() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [detailById, setDetailById] = useState<Record<number, ActivityLog>>({});
   const [showFilters, setShowFilters] = useState(false);
+
+  const toggleExpand = async (log: ActivityLog) => {
+    if (expandedId === log.id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(log.id);
+    if (!detailById[log.id]) {
+      try {
+        const res = await api.get(`/admin/activity-logs/${log.id}`);
+        setDetailById((m) => ({ ...m, [log.id]: res.data.data }));
+      } catch {
+        /* usa linha da lista */
+      }
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -191,18 +208,20 @@ export default function ActivityLogs() {
                   </td>
                 </tr>
               ) : (
-                data.map((log) => (
+                data.map((log) => {
+                  const full = detailById[log.id] ?? log;
+                  const hasDiff = !!(full.old_values && Object.keys(full.old_values).length > 0)
+                    || !!(full.new_values && Object.keys(full.new_values).length > 0);
+                  return (
                   <Fragment key={log.id}>
                     <tr
                       className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+                      onClick={() => toggleExpand(log)}
                     >
                       <td className="px-4 py-3">
-                        {(log.old_values || log.new_values) && (
-                          expandedId === log.id
-                            ? <ChevronUp className="h-4 w-4 text-gray-400" />
-                            : <ChevronDown className="h-4 w-4 text-gray-400" />
-                        )}
+                        {expandedId === log.id
+                          ? <ChevronUp className="h-4 w-4 text-gray-400" />
+                          : <ChevronDown className="h-4 w-4 text-gray-400" />}
                       </td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                         {new Date(log.created_at).toLocaleString('pt-BR')}
@@ -226,32 +245,37 @@ export default function ActivityLogs() {
                         {log.ip_address || '—'}
                       </td>
                     </tr>
-                    {expandedId === log.id && (log.old_values || log.new_values) && (
+                    {expandedId === log.id && (
                       <tr className="border-b border-gray-100 bg-gray-50">
                         <td colSpan={6} className="px-4 py-3">
+                          {!hasDiff ? (
+                            <p className="text-xs text-gray-500">Sem alterações detalhadas neste registro.</p>
+                          ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                            {log.old_values && Object.keys(log.old_values).length > 0 && (
+                            {full.old_values && Object.keys(full.old_values).length > 0 && (
                               <div>
                                 <p className="font-semibold text-gray-700 mb-1">Valores anteriores</p>
                                 <pre className="bg-white border border-gray-200 rounded-lg p-3 overflow-x-auto text-gray-600">
-                                  {JSON.stringify(log.old_values, null, 2)}
+                                  {JSON.stringify(full.old_values, null, 2)}
                                 </pre>
                               </div>
                             )}
-                            {log.new_values && Object.keys(log.new_values).length > 0 && (
+                            {full.new_values && Object.keys(full.new_values).length > 0 && (
                               <div>
                                 <p className="font-semibold text-gray-700 mb-1">Valores novos</p>
                                 <pre className="bg-white border border-gray-200 rounded-lg p-3 overflow-x-auto text-gray-600">
-                                  {JSON.stringify(log.new_values, null, 2)}
+                                  {JSON.stringify(full.new_values, null, 2)}
                                 </pre>
                               </div>
                             )}
                           </div>
+                          )}
                         </td>
                       </tr>
                     )}
                   </Fragment>
-                ))
+                );
+                })
               )}
             </tbody>
           </table>

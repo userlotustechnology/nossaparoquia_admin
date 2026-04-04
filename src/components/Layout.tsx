@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   Activity,
+  UserCog,
   Church,
   CreditCard,
   FileText,
@@ -31,6 +32,12 @@ import {
   Layers,
   Gift,
   PieChart,
+  Link2,
+  Scroll,
+  HandHelping,
+  KeyRound,
+  Clock3,
+  MessageSquare,
 } from 'lucide-react';
 
 const navigation = [
@@ -38,6 +45,8 @@ const navigation = [
   // Usuários
   { name: 'Usuários', href: '/usuarios', icon: Users, section: 'Usuários' },
   { name: 'Logs de Atividade', href: '/logs', icon: Activity, section: 'Usuários' },
+  { name: 'Auditoria de login', href: '/auditoria-login', icon: UserCog, section: 'Usuários' },
+  { name: 'Vínculos pendentes', href: '/vinculos-paroquia', icon: Link2, section: 'Usuários' },
   // Paróquias
   { name: 'Paróquias', href: '/paroquias', icon: Church, section: 'Paróquias' },
   { name: 'Planos', href: '/planos', icon: CreditCard, section: 'Paróquias' },
@@ -46,6 +55,8 @@ const navigation = [
   { name: 'Orações', href: '/oracoes', icon: Heart, section: 'Espiritual' },
   { name: 'Meditações', href: '/meditacoes', icon: ScrollText, section: 'Espiritual' },
   { name: 'Novenas', href: '/novenas', icon: Flame, section: 'Espiritual' },
+  { name: 'Relatório novenas', href: '/novenas/relatorio', icon: Scroll, section: 'Espiritual' },
+  { name: 'Direção espiritual', href: '/direcao-espiritual', icon: HandHelping, section: 'Espiritual' },
   // Formação
   { name: 'Cursos', href: '/cursos', icon: GraduationCap, section: 'Formação' },
   { name: 'Certificados', href: '/certificados', icon: Award, section: 'Formação' },
@@ -54,6 +65,7 @@ const navigation = [
   { name: 'Níveis', href: '/gamificacao/niveis', icon: Layers, section: 'Gamificação' },
   { name: 'Prêmios', href: '/gamificacao/premios', icon: Gift, section: 'Gamificação' },
   { name: 'Relatório', href: '/gamificacao/relatorio', icon: PieChart, section: 'Gamificação' },
+  { name: 'Prêmios pendentes', href: '/gamificacao/premios-pendentes', icon: Clock3, section: 'Gamificação' },
   // CMS
   { name: 'Páginas', href: '/paginas', icon: FileText, section: 'CMS' },
   { name: 'Posts', href: '/posts', icon: Newspaper, section: 'CMS' },
@@ -63,12 +75,14 @@ const navigation = [
   // Sistema
   { name: 'Configurações', href: '/configuracoes', icon: Settings, section: 'Sistema' },
   { name: 'Permissões', href: '/permissoes', icon: Shield, section: 'Sistema' },
+  { name: 'Catálogo de permissões', href: '/permissoes/catalogo', icon: KeyRound, section: 'Sistema' },
   { name: 'Restrições de IP', href: '/ip-restricoes', icon: Lock, section: 'Sistema' },
   { name: 'Webhooks', href: '/webhooks', icon: Webhook, section: 'Sistema' },
+  { name: 'Slack (canais)', href: '/integracoes/slack', icon: MessageSquare, section: 'Sistema' },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isImpersonating, stopImpersonation } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -77,6 +91,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const handleStopImpersonation = async () => {
+    try {
+      await stopImpersonation();
+    } catch {
+      alert('Não foi possível voltar ao administrador.');
+    }
   };
 
   return (
@@ -107,6 +129,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="lg:pl-64">
+        {isImpersonating && (
+          <div className="sticky top-0 z-40 bg-amber-100 border-b border-amber-200 px-4 py-2 text-sm text-amber-950 flex flex-wrap items-center justify-center gap-3">
+            <span>
+              Você está acessando como <strong>{user?.name}</strong> (não administrador).
+            </span>
+            <button
+              type="button"
+              onClick={handleStopImpersonation}
+              className="rounded-md bg-amber-800 px-3 py-1 text-white text-xs font-medium hover:bg-amber-900"
+            >
+              Voltar ao painel administrativo
+            </button>
+          </div>
+        )}
+
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6">

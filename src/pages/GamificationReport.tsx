@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '@/lib/api';
 
 interface LeaderRow {
@@ -93,16 +94,26 @@ export default function GamificationReport() {
               <th className="px-4 py-2 text-left text-gray-600">Usuário</th>
               <th className="px-4 py-2 text-left text-gray-600">E-mail</th>
               <th className="px-4 py-2 text-right text-gray-600">Pontos</th>
+              <th className="px-4 py-2 text-left text-gray-600">Detalhe</th>
             </tr>
           </thead>
           <tbody>
             {data.leaderboard.map((row, i) => (
-              <tr key={row.user_id} className="border-b border-gray-100">
-                <td className="px-4 py-2">{i + 1}</td>
-                <td className="px-4 py-2 font-medium">{row.user?.name ?? '—'}</td>
-                <td className="px-4 py-2 text-gray-600">{row.user?.email ?? '—'}</td>
-                <td className="px-4 py-2 text-right">{row.total_points}</td>
-              </tr>
+                <tr key={row.user_id} className="border-b border-gray-100">
+                  <td className="px-4 py-2">{i + 1}</td>
+                  <td className="px-4 py-2 font-medium">{row.user?.name ?? '—'}</td>
+                  <td className="px-4 py-2 text-gray-600">{row.user?.email ?? '—'}</td>
+                  <td className="px-4 py-2 text-right">{row.total_points}</td>
+                  <td className="px-4 py-2">
+                    {row.user?.id ? (
+                      <Link to={`/gamificacao/relatorio/usuario/${row.user.id}`} className="text-xs text-primary-600 hover:underline">
+                        Histórico
+                      </Link>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                </tr>
             ))}
           </tbody>
         </table>

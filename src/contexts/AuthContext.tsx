@@ -6,9 +6,12 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (credential: string) => Promise<void>;
   logout: () => Promise<void>;
+  stopImpersonation: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+const IMPERSONATION_KEY = 'admin_impersonation_backup_token';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -16,37 +19,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token: null,
     isAuthenticated: false,
     isLoading: true,
+    isImpersonating: false,
   });
 
   const initialize = useCallback(async () => {
     const token = localStorage.getItem('admin_auth_token');
-    const userStr = localStorage.getItem('admin_auth_user');
 
-    if (!token || !userStr) {
+    if (!token) {
       setState(s => ({ ...s, isLoading: false }));
       return;
     }
+
+    const impersonationBackup = localStorage.getItem(IMPERSONATION_KEY);
 
     try {
       const res = await api.get('/auth/me');
       const user = res.data.data as User;
 
-      if (user.role !== 'admin') {
+      if (user.role !== 'admin' && !impersonationBackup) {
         localStorage.removeItem('admin_auth_token');
         localStorage.removeItem('admin_auth_user');
         setState(s => ({ ...s, isLoading: false }));
         return;
       }
 
+      if (user.role !== 'admin' && impersonationBackup) {
+        localStorage.setItem('admin_auth_user', JSON.stringify(user));
+        setState({
+          user,
+          token,
+          isAuthenticated: true,
+          isLoading: false,
+          isImpersonating: true,
+        });
+        return;
+      }
+
+      localStorage.setItem('admin_auth_user', JSON.stringify(user));
       setState({
         user,
         token,
         isAuthenticated: true,
         isLoading: false,
+        isImpersonating: false,
       });
     } catch {
       localStorage.removeItem('admin_auth_token');
       localStorage.removeItem('admin_auth_user');
+      localStorage.removeItem(IMPERSONATION_KEY);
       setState(s => ({ ...s, isLoading: false }));
     }
   }, []);
@@ -70,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { user, token } = data;
 
+    localStorage.removeItem(IMPERSONATION_KEY);
     localStorage.setItem('admin_auth_token', token);
     localStorage.setItem('admin_auth_user', JSON.stringify(user));
 
@@ -84,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       isAuthenticated: true,
       isLoading: false,
+      isImpersonating: false,
     });
   };
 
@@ -95,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { user, token } = res.data.data;
 
+    localStorage.removeItem(IMPERSONATION_KEY);
     localStorage.setItem('admin_auth_token', token);
     localStorage.setItem('admin_auth_user', JSON.stringify(user));
 
@@ -109,10 +132,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       isAuthenticated: true,
       isLoading: false,
+      isImpersonating: false,
+    });
+  };
+
+  const stopImpersonation = async () => {
+    const backup = localStorage.getItem(IMPERSONATION_KEY);
+    if (!backup) {
+      return;
+    }
+
+    const res = await api.post('/admin/impersonate/stop', {
+      device_name: 'admin-web',
+    });
+
+    const { user, token } = res.data.data;
+
+    localStorage.removeItem(IMPERSONATION_KEY);
+    localStorage.setItem('admin_auth_token', token);
+    localStorage.setItem('admin_auth_user', JSON.stringify(user));
+
+    setState({
+      user,
+      token,
+      isAuthenticated: true,
+      isLoading: false,
+      isImpersonating: false,
     });
   };
 
   const logout = async () => {
+    if (localStorage.getItem(IMPERSONATION_KEY)) {
+      try {
+        await stopImpersonation();
+      } catch {
+        localStorage.removeItem(IMPERSONATION_KEY);
+        localStorage.removeItem('admin_auth_token');
+        localStorage.removeItem('admin_auth_user');
+        setState({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+          isImpersonating: false,
+        });
+      }
+      return;
+    }
+
     try {
       await api.post('/auth/logout');
     } catch {
@@ -120,16 +187,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     localStorage.removeItem('admin_auth_token');
     localStorage.removeItem('admin_auth_user');
+    localStorage.removeItem(IMPERSONATION_KEY);
     setState({
       user: null,
       token: null,
       isAuthenticated: false,
       isLoading: false,
+      isImpersonating: false,
     });
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ ...state, login, loginWithGoogle, logout, stopImpersonation }}>
       {children}
     </AuthContext.Provider>
   );

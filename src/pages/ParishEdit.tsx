@@ -1074,7 +1074,7 @@ export default function ParishEdit() {
                 <select value={planForm.plan_id} onChange={(e) => setPlanForm({ ...planForm, plan_id: e.target.value })} className={inputClass}>
                   <option value="">Selecione um plano...</option>
                   {plans.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name} — R$ {parseFloat(p.price_monthly || '0').toFixed(2).replace('.', ',')}/mês</option>
+                    <option key={p.id} value={String(p.id)}>{p.name} — R$ {parseFloat(String(p.price_monthly || '0')).toFixed(2).replace('.', ',')}/mês</option>
                   ))}
                 </select>
               </div>

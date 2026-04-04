@@ -22,6 +22,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('admin_auth_token');
       localStorage.removeItem('admin_auth_user');
+      localStorage.removeItem('admin_impersonation_backup_token');
       window.location.href = '/login';
     }
     return Promise.reject(error);
