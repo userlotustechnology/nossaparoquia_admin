@@ -8,6 +8,7 @@ import { FORMATION_CATEGORIES, FORMATION_LEVELS } from '@/constants/formationCou
 
 interface CourseRow {
   id: number;
+  uuid: string;
   title: string;
   slug: string;
   is_active: boolean;
@@ -99,7 +100,7 @@ export default function FormationCourses() {
   const openEdit = async (item: CourseRow) => {
     setSelected(item);
     try {
-      const res = await api.get(`/admin/courses/${item.id}`);
+      const res = await api.get(`/admin/courses/${item.uuid}`);
       const c = res.data.data;
       setForm({
         title: c.title,
@@ -162,7 +163,7 @@ export default function FormationCourses() {
         thumbnail_path: form.thumbnail_path || null,
       };
       if (selected) {
-        await api.put(`/admin/courses/${selected.id}`, payload);
+        await api.put(`/admin/courses/${selected.uuid}`, payload);
       } else {
         await api.post('/admin/courses', payload);
       }
@@ -180,7 +181,7 @@ export default function FormationCourses() {
     if (!selected) return;
     setSaving(true);
     try {
-      await api.delete(`/admin/courses/${selected.id}`);
+      await api.delete(`/admin/courses/${selected.uuid}`);
       setDeleteOpen(false);
       setFormOpen(false);
       setSelected(null);
@@ -250,9 +251,9 @@ export default function FormationCourses() {
         }}
         canDelete
         createLabel="Novo curso"
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.uuid}
         extraActions={(item) => (
-          <Link to={`/cursos/${item.id}`} className="text-xs font-medium text-primary-600 hover:underline">
+          <Link to={`/cursos/${item.uuid}`} className="text-xs font-medium text-primary-600 hover:underline">
             Gerenciar
           </Link>
         )}

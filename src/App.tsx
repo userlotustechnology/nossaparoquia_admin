@@ -68,7 +68,7 @@ export default function App() {
                       <Route path="/vinculos-paroquia" element={<ParishLinkRequests />} />
                       {/* Paróquias */}
                       <Route path="/paroquias" element={<Parishes />} />
-                      <Route path="/paroquias/:id" element={<ParishEdit />} />
+                      <Route path="/paroquias/:uuid" element={<ParishEdit />} />
                       <Route path="/planos" element={<Plans />} />
                       {/* Espiritual / Formação / Gamificação */}
                       <Route path="/oracoes/categorias" element={<PrayerCategories />} />
@@ -77,7 +77,7 @@ export default function App() {
                       <Route path="/novenas/relatorio" element={<NovenaReport />} />
                       <Route path="/novenas" element={<Novenas />} />
                       <Route path="/direcao-espiritual" element={<SpiritualDirections />} />
-                      <Route path="/cursos/:courseId" element={<FormationCourseManage />} />
+                      <Route path="/cursos/:courseUuid" element={<FormationCourseManage />} />
                       <Route path="/cursos" element={<FormationCourses />} />
                       <Route path="/certificados" element={<Certificates />} />
                       <Route path="/gamificacao/acoes" element={<GamificationActions />} />

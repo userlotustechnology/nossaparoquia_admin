@@ -143,9 +143,9 @@ const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm o
 // ─── Component ──────────────────────────────────────────────────
 
 export default function ParishEdit() {
-  const { id } = useParams<{ id: string }>();
+  const { uuid: parishUuid } = useParams<{ uuid: string }>();
   const navigate = useNavigate();
-  const parishId = id;
+  const parishId = parishUuid;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -9,6 +9,7 @@ type ManageTab = 'overview' | 'enrollments' | 'curriculum' | 'library';
 
 interface CourseDetail {
   id: number;
+  uuid: string;
   title: string;
   slug: string;
   description: string | null;
@@ -95,9 +96,13 @@ function formatBytes(n: number | null | undefined) {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function isUuid(value: string | undefined): boolean {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 export default function FormationCourseManage() {
-  const { courseId: courseIdParam } = useParams<{ courseId: string }>();
-  const courseId = Number(courseIdParam);
+  const { courseUuid } = useParams<{ courseUuid: string }>();
 
   const [tab, setTab] = useState<ManageTab>('overview');
   const [course, setCourse] = useState<CourseDetail | null>(null);
@@ -159,11 +164,11 @@ export default function FormationCourseManage() {
   const [matFileMeta, setMatFileMeta] = useState<{ path: string; type: string; size: number } | null>(null);
 
   const loadCourse = useCallback(async () => {
-    if (!Number.isFinite(courseId) || courseId < 1) return;
+    if (!isUuid(courseUuid)) return;
     setCourseLoading(true);
     setCourseError('');
     try {
-      const res = await api.get(`/admin/courses/${courseId}`);
+      const res = await api.get(`/admin/courses/${courseUuid}`);
       setCourse(res.data.data);
     } catch {
       setCourse(null);
@@ -171,24 +176,24 @@ export default function FormationCourseManage() {
     } finally {
       setCourseLoading(false);
     }
-  }, [courseId]);
+  }, [courseUuid]);
 
   useEffect(() => {
     void loadCourse();
   }, [loadCourse]);
 
   const fetchModules = useCallback(async () => {
-    if (!Number.isFinite(courseId) || courseId < 1) return;
+    if (!isUuid(courseUuid)) return;
     setCurriculumLoading(true);
     try {
-      const res = await api.get(`/admin/courses/${courseId}/modules`);
+      const res = await api.get(`/admin/courses/${courseUuid}/modules`);
       setModules(Array.isArray(res.data.data) ? res.data.data : []);
     } catch {
       setModules([]);
     } finally {
       setCurriculumLoading(false);
     }
-  }, [courseId]);
+  }, [courseUuid]);
 
   useEffect(() => {
     if (tab !== 'curriculum' && tab !== 'library') return;
@@ -196,10 +201,10 @@ export default function FormationCourseManage() {
   }, [tab, fetchModules]);
 
   const fetchEnrollments = useCallback(async () => {
-    if (!Number.isFinite(courseId) || courseId < 1) return;
+    if (!isUuid(courseUuid)) return;
     setEnrollLoading(true);
     try {
-      const res = await api.get(`/admin/courses/${courseId}/enrollments`, {
+      const res = await api.get(`/admin/courses/${courseUuid}/enrollments`, {
         params: {
           page: enrollPage,
           per_page: 20,
@@ -213,7 +218,7 @@ export default function FormationCourseManage() {
     } finally {
       setEnrollLoading(false);
     }
-  }, [courseId, enrollPage, paymentFilter]);
+  }, [courseUuid, enrollPage, paymentFilter]);
 
   useEffect(() => {
     if (tab === 'enrollments') {
@@ -272,7 +277,7 @@ export default function FormationCourseManage() {
     try {
       const { thumbnail_preview_url: _p, ...rest } = form;
       void _p;
-      await api.put(`/admin/courses/${course.id}`, {
+      await api.put(`/admin/courses/${course.uuid}`, {
         ...rest,
         slug: form.slug || undefined,
         max_students: form.max_students === '' ? null : Number(form.max_students),
@@ -338,7 +343,7 @@ export default function FormationCourseManage() {
     if (!newModuleTitle.trim()) return;
     setSaving(true);
     try {
-      await api.post(`/admin/courses/${courseId}/modules`, { title: newModuleTitle.trim() });
+      await api.post(`/admin/courses/${courseUuid}/modules`, { title: newModuleTitle.trim() });
       setNewModuleTitle('');
       await fetchModules();
     } catch {
@@ -351,7 +356,7 @@ export default function FormationCourseManage() {
   const deleteModule = async (m: ModuleRow) => {
     if (!confirm('Remover módulo e aulas?')) return;
     try {
-      await api.delete(`/admin/courses/${courseId}/modules/${m.id}`);
+      await api.delete(`/admin/courses/${courseUuid}/modules/${m.id}`);
       await fetchModules();
     } catch {
       alert('Erro.');
@@ -424,9 +429,9 @@ export default function FormationCourseManage() {
     setSaving(true);
     try {
       if (lesson) {
-        await api.put(`/admin/courses/${courseId}/modules/${module.id}/lessons/${lesson.id}`, payload);
+        await api.put(`/admin/courses/${courseUuid}/modules/${module.id}/lessons/${lesson.id}`, payload);
       } else {
-        await api.post(`/admin/courses/${courseId}/modules/${module.id}/lessons`, payload);
+        await api.post(`/admin/courses/${courseUuid}/modules/${module.id}/lessons`, payload);
       }
       setLessonModal(null);
       await fetchModules();
@@ -441,7 +446,7 @@ export default function FormationCourseManage() {
   const deleteLesson = async (module: ModuleRow, lesson: LessonRow) => {
     if (!confirm('Excluir aula?')) return;
     try {
-      await api.delete(`/admin/courses/${courseId}/modules/${module.id}/lessons/${lesson.id}`);
+      await api.delete(`/admin/courses/${courseUuid}/modules/${module.id}/lessons/${lesson.id}`);
       await fetchModules();
     } catch {
       alert('Erro.');
@@ -452,7 +457,7 @@ export default function FormationCourseManage() {
     setMatForm({ title: material?.title ?? '' });
     setMatFileMeta(
       material
-        ? { path: material.file_path, type: material.file_type,  size: material.file_size ?? 0 }
+        ? { path: material.file_path, type: material.file_type, size: material.file_size ?? 0 }
         : null
     );
     setMatModal({ module, lesson, material });
@@ -490,7 +495,7 @@ export default function FormationCourseManage() {
     try {
       if (material) {
         await api.put(
-          `/admin/courses/${courseId}/modules/${module.id}/lessons/${lesson.id}/materials/${material.id}`,
+          `/admin/courses/${courseUuid}/modules/${module.id}/lessons/${lesson.id}/materials/${material.id}`,
           {
             title: matForm.title.trim(),
             ...(matFileMeta
@@ -503,7 +508,7 @@ export default function FormationCourseManage() {
           }
         );
       } else {
-        await api.post(`/admin/courses/${courseId}/modules/${module.id}/lessons/${lesson.id}/materials`, {
+        await api.post(`/admin/courses/${courseUuid}/modules/${module.id}/lessons/${lesson.id}/materials`, {
           title: matForm.title.trim(),
           file_path: matFileMeta!.path,
           file_type: matFileMeta!.type,
@@ -525,7 +530,7 @@ export default function FormationCourseManage() {
     if (!confirm('Remover este material da biblioteca?')) return;
     try {
       await api.delete(
-        `/admin/courses/${courseId}/modules/${module.id}/lessons/${lesson.id}/materials/${material.id}`
+        `/admin/courses/${courseUuid}/modules/${module.id}/lessons/${lesson.id}/materials/${material.id}`
       );
       await fetchModules();
     } catch {
@@ -545,10 +550,10 @@ export default function FormationCourseManage() {
     )
   );
 
-  if (!Number.isFinite(courseId) || courseId < 1) {
+  if (!isUuid(courseUuid)) {
     return (
       <div className="p-6">
-        <p className="text-sm text-red-600">ID de curso inválido.</p>
+        <p className="text-sm text-red-600">Identificador do curso inválido.</p>
         <Link to="/cursos" className="mt-4 inline-block text-primary-600">
           Voltar à lista
         </Link>
