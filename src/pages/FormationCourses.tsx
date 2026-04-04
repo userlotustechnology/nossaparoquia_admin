@@ -28,6 +28,7 @@ interface CourseRow {
   is_active: boolean;
   enrollments_count: number;
   price: number;
+  thumbnail_url?: string | null;
 }
 
 interface EnrollRow {
@@ -92,6 +93,7 @@ export default function FormationCourses() {
     contentJson: '',
   });
   const [saving, setSaving] = useState(false);
+  const [thumbUploading, setThumbUploading] = useState(false);
   const [form, setForm] = useState({
     title: '',
     slug: '',
@@ -106,6 +108,8 @@ export default function FormationCourses() {
     has_classes: false,
     requires_approval: false,
     max_students: '' as string | number,
+    thumbnail_path: '' as string | null,
+    thumbnail_preview_url: '',
   });
 
   const fetchData = useCallback(async () => {
@@ -147,6 +151,8 @@ export default function FormationCourses() {
       has_classes: false,
       requires_approval: false,
       max_students: '',
+      thumbnail_path: null,
+      thumbnail_preview_url: '',
     });
     setFormOpen(true);
   };
@@ -170,6 +176,8 @@ export default function FormationCourses() {
         has_classes: c.has_classes,
         requires_approval: c.requires_approval,
         max_students: c.max_students ?? '',
+        thumbnail_path: c.thumbnail_path ?? null,
+        thumbnail_preview_url: c.thumbnail_url ?? '',
       });
       setFormOpen(true);
     } catch {
@@ -315,13 +323,42 @@ export default function FormationCourses() {
     if (enrollOpen && selected) fetchEnrollments();
   }, [enrollOpen, selected, enrollPage, fetchEnrollments]);
 
+  const uploadThumbnail = async (file: File) => {
+    setThumbUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await api.post('/files/upload', fd);
+      const d = res.data?.data as { path?: string; url?: string };
+      if (d?.path) {
+        setForm((f) => ({
+          ...f,
+          thumbnail_path: d.path ?? null,
+          thumbnail_preview_url: d.url ?? f.thumbnail_preview_url,
+        }));
+      }
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
+      const errs = ax.response?.data?.errors;
+      const msg = errs
+        ? Object.values(errs).flat().join('\n')
+        : ax.response?.data?.message || 'Erro ao enviar imagem.';
+      alert(msg);
+    } finally {
+      setThumbUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
+      const { thumbnail_preview_url: _preview, ...rest } = form;
+      void _preview;
       const payload = {
-        ...form,
+        ...rest,
         slug: form.slug || undefined,
         max_students: form.max_students === '' ? null : Number(form.max_students),
+        thumbnail_path: form.thumbnail_path || null,
       };
       if (selected) {
         await api.put(`/admin/courses/${selected.id}`, payload);
@@ -375,6 +412,19 @@ export default function FormationCourses() {
   };
 
   const columns = [
+    {
+      key: 'cover',
+      label: '',
+      render: (item: CourseRow) => (
+        <div className="h-10 w-14 shrink-0 overflow-hidden rounded bg-gray-100">
+          {item.thumbnail_url ? (
+            <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-[10px] text-gray-400">—</div>
+          )}
+        </div>
+      ),
+    },
     {
       key: 'title',
       label: 'Curso',
@@ -464,6 +514,51 @@ export default function FormationCourses() {
               rows={3}
               className="w-full rounded border px-3 py-2 text-sm"
             />
+          </div>
+          <div className="sm:col-span-2 space-y-2">
+            <label className="mb-1 block text-sm text-gray-700">
+              Capa do curso
+              {form.is_active ? <span className="text-red-600"> *</span> : null}
+            </label>
+            <p className="text-xs text-gray-500">
+              Obrigatória enquanto o curso estiver ativo. Formatos: JPG, PNG ou GIF (conforme configuração da API).
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex h-28 w-44 items-center justify-center overflow-hidden rounded border border-gray-200 bg-gray-50">
+                {form.thumbnail_preview_url ? (
+                  <img src={form.thumbnail_preview_url} alt="" className="h-full w-full object-cover" />
+                ) : thumbUploading ? (
+                  <span className="text-xs text-gray-400">Enviando…</span>
+                ) : (
+                  <span className="text-xs text-gray-400">Sem imagem</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  disabled={thumbUploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (f) void uploadThumbnail(f);
+                  }}
+                  className="max-w-[220px] text-sm file:mr-2 file:rounded file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-700"
+                />
+                {form.thumbnail_path ? (
+                  <button
+                    type="button"
+                    disabled={thumbUploading}
+                    onClick={() =>
+                      setForm((f) => ({ ...f, thumbnail_path: null, thumbnail_preview_url: '' }))
+                    }
+                    className="self-start text-xs text-red-600 hover:underline disabled:opacity-50"
+                  >
+                    Remover capa
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
           <div>
             <label className="mb-1 block text-sm text-gray-700">Preço</label>
@@ -562,7 +657,7 @@ export default function FormationCourses() {
           </button>
           <button
             type="button"
-            disabled={saving || !form.title}
+            disabled={saving || thumbUploading || !form.title}
             onClick={handleSave}
             className="rounded bg-primary-500 px-4 py-2 text-sm text-white disabled:opacity-50"
           >
