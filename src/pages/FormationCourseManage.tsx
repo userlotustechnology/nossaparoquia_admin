@@ -25,6 +25,7 @@ interface CourseDetail {
   has_classes: boolean;
   requires_approval: boolean;
   max_students: number | null;
+  min_age: number | null;
   thumbnail_path: string | null;
   thumbnail_url: string | null;
   enrollments_count: number | null;
@@ -126,6 +127,7 @@ export default function FormationCourseManage() {
     has_classes: false,
     requires_approval: false,
     max_students: '' as string | number,
+    min_age: '' as string | number,
     thumbnail_path: '' as string | null,
     thumbnail_preview_url: '',
   });
@@ -242,6 +244,7 @@ export default function FormationCourseManage() {
       has_classes: course.has_classes,
       requires_approval: course.requires_approval,
       max_students: course.max_students ?? '',
+      min_age: course.min_age ?? '',
       thumbnail_path: course.thumbnail_path ?? null,
       thumbnail_preview_url: course.thumbnail_url ?? '',
     });
@@ -281,6 +284,7 @@ export default function FormationCourseManage() {
         ...rest,
         slug: form.slug || undefined,
         max_students: form.max_students === '' ? null : Number(form.max_students),
+        min_age: form.min_age === '' ? null : Number(form.min_age),
         thumbnail_path: form.thumbnail_path || null,
       });
       setFormOpen(false);
@@ -675,6 +679,12 @@ export default function FormationCourseManage() {
             <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Slug</p>
               <p className="mt-1 font-mono text-sm text-gray-800">{course.slug}</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Idade mínima</p>
+              <p className="mt-1 text-lg font-semibold text-gray-900">
+                {course.min_age != null && course.min_age > 0 ? `${course.min_age} anos` : 'Sem exigência'}
+              </p>
             </div>
           </div>
         </div>
@@ -1079,6 +1089,19 @@ export default function FormationCourseManage() {
               onChange={(e) => setForm((f) => ({ ...f, max_students: e.target.value }))}
               className="w-full rounded border px-3 py-2 text-sm"
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-gray-700">Idade mínima (anos)</label>
+            <input
+              type="number"
+              min={1}
+              max={120}
+              placeholder="Opcional"
+              value={form.min_age}
+              onChange={(e) => setForm((f) => ({ ...f, min_age: e.target.value }))}
+              className="w-full rounded border px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-xs text-gray-500">Vazio = sem exigência na matrícula.</p>
           </div>
           <div className="flex flex-col gap-2 sm:col-span-2">
             {(['is_active', 'is_featured', 'has_classes', 'requires_approval'] as const).map((k) => (
