@@ -30,6 +30,7 @@ import Prayers from '@/pages/Prayers';
 import BibleMeditations from '@/pages/BibleMeditations';
 import Novenas from '@/pages/Novenas';
 import FormationCourses from '@/pages/FormationCourses';
+import FormationCourseManage from '@/pages/FormationCourseManage';
 import Certificates from '@/pages/Certificates';
 import GamificationActions from '@/pages/GamificationActions';
 import GamificationLevels from '@/pages/GamificationLevels';
@@ -76,6 +77,7 @@ export default function App() {
                       <Route path="/novenas/relatorio" element={<NovenaReport />} />
                       <Route path="/novenas" element={<Novenas />} />
                       <Route path="/direcao-espiritual" element={<SpiritualDirections />} />
+                      <Route path="/cursos/:courseId" element={<FormationCourseManage />} />
                       <Route path="/cursos" element={<FormationCourses />} />
                       <Route path="/certificados" element={<Certificates />} />
                       <Route path="/gamificacao/acoes" element={<GamificationActions />} />
