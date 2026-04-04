@@ -74,6 +74,7 @@ export interface ObservabilityOverview {
   };
   pulse: {
     enabled: boolean;
+    dashboard: boolean;
     dashboard_path: string;
     dashboard_url: string | null;
     tables_present: boolean;

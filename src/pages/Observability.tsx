@@ -91,7 +91,7 @@ export default function Observability() {
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
           </button>
-          {pulseOpenUrl && data.pulse.enabled && (
+          {pulseOpenUrl && data.pulse.dashboard && (
             <a
               href={pulseOpenUrl}
               target="_blank"
@@ -175,8 +175,12 @@ export default function Observability() {
         <h2 className="mb-3 font-semibold text-gray-900">Laravel Pulse</h2>
         <dl className="grid gap-2 text-sm sm:grid-cols-2">
           <div className="flex justify-between gap-4 sm:block">
-            <dt className="text-gray-500">Estado</dt>
-            <dd className="text-gray-900">{data.pulse.enabled ? 'Ativo' : 'Desativado'}</dd>
+            <dt className="text-gray-500">Recolha (PULSE_ENABLED)</dt>
+            <dd className="text-gray-900">{data.pulse.enabled ? 'Ativa' : 'Desligada'}</dd>
+          </div>
+          <div className="flex justify-between gap-4 sm:block">
+            <dt className="text-gray-500">UI web /pulse</dt>
+            <dd className="text-gray-900">{data.pulse.dashboard ? 'Ligada' : 'Desligada (recomendado em produção)'}</dd>
           </div>
           <div className="flex justify-between gap-4 sm:block">
             <dt className="text-gray-500">Tabelas migradas</dt>
