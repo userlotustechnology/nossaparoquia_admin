@@ -21,6 +21,16 @@ import {
   Menu,
   X,
   ChevronDown,
+  BookOpen,
+  Heart,
+  ScrollText,
+  Flame,
+  GraduationCap,
+  Award,
+  Zap,
+  Layers,
+  Gift,
+  PieChart,
 } from 'lucide-react';
 
 const navigation = [
@@ -31,6 +41,19 @@ const navigation = [
   // Paróquias
   { name: 'Paróquias', href: '/paroquias', icon: Church, section: 'Paróquias' },
   { name: 'Planos', href: '/planos', icon: CreditCard, section: 'Paróquias' },
+  // Conteúdo espiritual
+  { name: 'Cat. de orações', href: '/oracoes/categorias', icon: BookOpen, section: 'Espiritual' },
+  { name: 'Orações', href: '/oracoes', icon: Heart, section: 'Espiritual' },
+  { name: 'Meditações', href: '/meditacoes', icon: ScrollText, section: 'Espiritual' },
+  { name: 'Novenas', href: '/novenas', icon: Flame, section: 'Espiritual' },
+  // Formação
+  { name: 'Cursos', href: '/cursos', icon: GraduationCap, section: 'Formação' },
+  { name: 'Certificados', href: '/certificados', icon: Award, section: 'Formação' },
+  // Gamificação
+  { name: 'Ações (pontos)', href: '/gamificacao/acoes', icon: Zap, section: 'Gamificação' },
+  { name: 'Níveis', href: '/gamificacao/niveis', icon: Layers, section: 'Gamificação' },
+  { name: 'Prêmios', href: '/gamificacao/premios', icon: Gift, section: 'Gamificação' },
+  { name: 'Relatório', href: '/gamificacao/relatorio', icon: PieChart, section: 'Gamificação' },
   // CMS
   { name: 'Páginas', href: '/paginas', icon: FileText, section: 'CMS' },
   { name: 'Posts', href: '/posts', icon: Newspaper, section: 'CMS' },
@@ -168,8 +191,7 @@ function SidebarContent({ nav, currentPath, onClose }: SidebarContentProps) {
         {nav.map((item, idx) => {
           const prevSection = idx > 0 ? nav[idx - 1].section : null;
           const showSectionLabel = item.section && item.section !== prevSection;
-          const isActive = currentPath === item.href ||
-            (item.href !== '/' && currentPath.startsWith(item.href));
+          const isActive = currentPath === item.href;
 
           return (
             <div key={item.name}>

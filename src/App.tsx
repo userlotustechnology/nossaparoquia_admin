@@ -25,6 +25,16 @@ import SystemSettings from '@/pages/SystemSettings';
 import Permissions from '@/pages/Permissions';
 import IpRestrictions from '@/pages/IpRestrictions';
 import Webhooks from '@/pages/Webhooks';
+import PrayerCategories from '@/pages/PrayerCategories';
+import Prayers from '@/pages/Prayers';
+import BibleMeditations from '@/pages/BibleMeditations';
+import Novenas from '@/pages/Novenas';
+import FormationCourses from '@/pages/FormationCourses';
+import Certificates from '@/pages/Certificates';
+import GamificationActions from '@/pages/GamificationActions';
+import GamificationLevels from '@/pages/GamificationLevels';
+import GamificationPrizes from '@/pages/GamificationPrizes';
+import GamificationReport from '@/pages/GamificationReport';
 
 export default function App() {
   return (
@@ -49,6 +59,17 @@ export default function App() {
                       <Route path="/paroquias" element={<Parishes />} />
                       <Route path="/paroquias/:id" element={<ParishEdit />} />
                       <Route path="/planos" element={<Plans />} />
+                      {/* Espiritual / Formação / Gamificação */}
+                      <Route path="/oracoes/categorias" element={<PrayerCategories />} />
+                      <Route path="/oracoes" element={<Prayers />} />
+                      <Route path="/meditacoes" element={<BibleMeditations />} />
+                      <Route path="/novenas" element={<Novenas />} />
+                      <Route path="/cursos" element={<FormationCourses />} />
+                      <Route path="/certificados" element={<Certificates />} />
+                      <Route path="/gamificacao/acoes" element={<GamificationActions />} />
+                      <Route path="/gamificacao/niveis" element={<GamificationLevels />} />
+                      <Route path="/gamificacao/premios" element={<GamificationPrizes />} />
+                      <Route path="/gamificacao/relatorio" element={<GamificationReport />} />
                       {/* CMS */}
                       <Route path="/paginas" element={<CmsPages />} />
                       <Route path="/posts" element={<CmsPosts />} />

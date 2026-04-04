@@ -50,6 +50,7 @@ export interface ApiResponse<T> {
 
 export interface Parish {
   id: number;
+  uuid: string;
   name: string;
   slug: string;
   description: string | null;

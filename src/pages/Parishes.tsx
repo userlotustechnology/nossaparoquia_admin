@@ -79,7 +79,7 @@ export default function Parishes() {
   };
 
   const openEdit = (item: Parish) => {
-    navigate(`/paroquias/${item.id}`);
+    navigate(`/paroquias/${item.uuid}`);
   };
 
   const handleSave = async () => {
@@ -87,7 +87,7 @@ export default function Parishes() {
     try {
       const payload = { ...form };
       if (selected) {
-        await api.put(`/admin/parishes/${selected.id}`, payload);
+        await api.put(`/admin/parishes/${selected.uuid}`, payload);
       } else {
         await api.post('/admin/parishes', payload);
       }
@@ -110,7 +110,7 @@ export default function Parishes() {
     if (!selected) return;
     setSaving(true);
     try {
-      await api.delete(`/admin/parishes/${selected.id}`);
+      await api.delete(`/admin/parishes/${selected.uuid}`);
       setDeleteOpen(false);
       setSelected(null);
       fetchData();
