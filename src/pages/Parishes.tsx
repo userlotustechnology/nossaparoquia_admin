@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import DataTable from '@/components/DataTable';
 import Modal from '@/components/Modal';
@@ -6,6 +7,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import type { Parish, PaginatedResponse } from '@/types';
 
 export default function Parishes() {
+  const navigate = useNavigate();
   const [data, setData] = useState<Parish[]>([]);
   const [meta, setMeta] = useState<PaginatedResponse<Parish>['meta'] | undefined>();
   const [loading, setLoading] = useState(true);
@@ -77,22 +79,7 @@ export default function Parishes() {
   };
 
   const openEdit = (item: Parish) => {
-    setSelected(item);
-    setForm({
-      name: item.name || '',
-      slug: item.slug || '',
-      description: item.description || '',
-      email: item.email || '',
-      phone: item.phone || '',
-      whatsapp: item.whatsapp || '',
-      pix_key: item.pix_key || '',
-      address: item.address || '',
-      city: item.city || '',
-      state: item.state || '',
-      is_active: item.is_active,
-      requires_link_approval: item.requires_link_approval,
-    });
-    setFormOpen(true);
+    navigate(`/paroquias/${item.id}`);
   };
 
   const handleSave = async () => {

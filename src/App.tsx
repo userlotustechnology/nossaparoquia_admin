@@ -14,6 +14,7 @@ import Dashboard from '@/pages/Dashboard';
 import Users from '@/pages/Users';
 import ActivityLogs from '@/pages/ActivityLogs';
 import Parishes from '@/pages/Parishes';
+import ParishEdit from '@/pages/ParishEdit';
 import Plans from '@/pages/Plans';
 import CmsPages from '@/pages/Pages';
 import CmsPosts from '@/pages/Posts';
@@ -46,6 +47,7 @@ export default function App() {
                       <Route path="/logs" element={<ActivityLogs />} />
                       {/* Paróquias */}
                       <Route path="/paroquias" element={<Parishes />} />
+                      <Route path="/paroquias/:id" element={<ParishEdit />} />
                       <Route path="/planos" element={<Plans />} />
                       {/* CMS */}
                       <Route path="/paginas" element={<CmsPages />} />
